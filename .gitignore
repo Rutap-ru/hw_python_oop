@@ -16,3 +16,6 @@ __pycache__/
 *.sublime-workspace
 
 testim.py
+.vscode
+.vscode/
+.vscode/*

@@ -12,7 +12,7 @@ class Calculator:
     def add_record(self, some_record):
         self.records.append(some_record)
 
-    def get_today_stats(self, records):
+    def get_today_stats(self):
         amount_today = 0
         for record in self.records:
             if record.date == date_today:
@@ -40,9 +40,9 @@ class Record:
 class CaloriesCalculator(Calculator):
 
     def get_calories_remained(self):
-        remained = self.limit-super().get_today_stats(self.records)
-        if remained < self.limit:
-            return {f'Сегодня можно съесть что-нибудь ещё, но с общей калорийностью не более {remained} кКал'}
+        remained = self.limit-super().get_today_stats()
+        if remained < self.limit and remained > 0:
+            return f'Сегодня можно съесть что-нибудь ещё, но с общей калорийностью не более {remained} кКал'
         else:
             return 'Хватит есть!'
 
@@ -56,44 +56,26 @@ class CashCalculator(Calculator):
             'usd' : [self.USD_RATE, 'USD'],
             'eur' : [self.EURO_RATE, 'Euro']
         }
-        if list_rate[currency][0]:
-            money_total = round(money/list_rate[currency][0], 2)
-            currency_data = [money_total, list_rate[currency][1]]
+        if list_rate[currency]:
+            money = round(money/list_rate[currency][0], 2)
+            currency_data = [money, list_rate[currency][1]]
             return currency_data
         else:
             return False
 
     def get_today_cash_remained(self, currency):
-        remained = self.limit-super().get_today_stats(self.records)
-        if remained == self.limit:
-            print('Денег нет, держись')
-        elif remained < self.limit:
+        remained = self.limit-super().get_today_stats()
+        if remained == 0:
+            return 'Денег нет, держись'
+        elif remained < self.limit and remained > 0:
             remained_exchange = self.exchange_rates(currency, remained)
             if remained_exchange:
-                return {f'На сегодня осталось {remained_exchange[0]} {remained_exchange[1]}'}
+                return f'На сегодня осталось {remained_exchange[0]} {remained_exchange[1]}'
             else:
-                return {f'В валюту "{currency}" пока не конвертирую'}
+                return f'В валюту "{currency}" пока не конвертирую'
         else:
             remained_exchange = self.exchange_rates(currency, remained)
             if remained_exchange:
-                return {f'Денег нет, держись: твой долг - {remained_exchange[0]} {remained_exchange[1]}'}
+                return f'Денег нет, держись: твой долг - {abs(remained_exchange[0])} {remained_exchange[1]}'
             else:
-                return {f'Денег нет, держись. Но в валюту "{currency}" пока не конвертирую'}
-
-
-
-
-# создадим калькулятор денег с дневным лимитом 1000
-cash_calculator = CashCalculator(1000)
-        
-# дата в параметрах не указана, 
-# так что по умолчанию к записи должна автоматически добавиться сегодняшняя дата
-cash_calculator.add_record(Record(amount=145, comment="кофе")) 
-# и к этой записи тоже дата должна добавиться автоматически
-cash_calculator.add_record(Record(amount=300, comment="Серёге за обед"))
-# а тут пользователь указал дату, сохраняем её
-cash_calculator.add_record(Record(amount=3000, comment="бар в Танин др", date="08.11.2019"))
-                
-print(cash_calculator.get_today_cash_remained("rub"))
-# должно напечататься
-# На сегодня осталось 555 руб 
+                return f'Денег нет, держись. Но в валюту "{currency}" пока не конвертирую'
