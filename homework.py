@@ -81,4 +81,4 @@ class CashCalculator(Calculator):
             return f'На сегодня осталось {remained_exchange[0]} {remained_exchange[1]}'
 
         return (f'Денег нет, держись: твой долг '
-                    f'- {abs(remained_exchange[0])} {remained_exchange[1]}')
+            f'- {abs(remained_exchange[0])} {remained_exchange[1]}')
