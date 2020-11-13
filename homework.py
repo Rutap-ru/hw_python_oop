@@ -1,7 +1,5 @@
 import datetime as dt
 
-date_today = dt.datetime.now().date()
-week_ago = date_today - dt.timedelta(days=7)
 
 class Calculator:
 
@@ -13,69 +11,74 @@ class Calculator:
         self.records.append(some_record)
 
     def get_today_stats(self):
-        amount_today = 0
-        for record in self.records:
-            if record.date == date_today:
-                amount_today += record.amount
+        date_today = dt.datetime.now().date()
+        amount_today = sum([i.amount for i in self.records if i.date == date_today])
         return amount_today
  
     def get_week_stats(self):
-        amount_week = 0
-        for record in self.records:
-            if record.date >= week_ago and record.date <= date_today:
-                amount_week += record.amount
-        return amount_week
+        today = dt.datetime.now().date()
+        week = today - dt.timedelta(days=7)
+        records = self.records
+        return sum([i.amount for i in records if i.date >= week and i.date <= today])
+
+    def count_remainder(self):
+        return self.limit - self.get_today_stats()
+
 
 class Record:
 
-    def __init__(self, amount, comment, date=False):
+    def __init__(self, amount, comment, date=None):
         self.amount = amount
         self.comment = comment
-        if date == False:
+
+        if date is None:
+            date_today = dt.datetime.now().date()
             self.date = date_today
         else:
             date_format = '%d.%m.%Y'
             self.date = dt.datetime.strptime(date, date_format).date()
 
+
 class CaloriesCalculator(Calculator):
 
     def get_calories_remained(self):
-        remained = self.limit-super().get_today_stats()
+        remained = self.count_remainder()
+
         if remained < self.limit and remained > 0:
-            return f'Сегодня можно съесть что-нибудь ещё, но с общей калорийностью не более {remained} кКал'
+            return (f'Сегодня можно съесть что-нибудь ещё, '
+                f'но с общей калорийностью не более {remained} кКал')
         else:
             return 'Хватит есть!'
 
+
 class CashCalculator(Calculator):
-    USD_RATE = 76.77
-    EURO_RATE = 90.69   
+    USD_RATE = 60.0
+    EURO_RATE = 70.0
+    currencies = {
+        'rub' : [1, 'руб'],
+        'usd' : [USD_RATE, 'USD'],
+        'eur' : [EURO_RATE, 'Euro']
+    }
 
     def exchange_rates(self, currency, money):
-        list_rate = {
-            'rub' : [1, 'руб'],
-            'usd' : [self.USD_RATE, 'USD'],
-            'eur' : [self.EURO_RATE, 'Euro']
-        }
-        if list_rate[currency]:
-            money = round(money/list_rate[currency][0], 2)
-            currency_data = [money, list_rate[currency][1]]
-            return currency_data
-        else:
-            return False
+        rate = self.currencies[currency]
+        money = round(money/rate[0], 2)
+        return [money, rate[1]]
 
     def get_today_cash_remained(self, currency):
-        remained = self.limit-super().get_today_stats()
+
+        if currency not in self.currencies:
+            return 'Конвертация в данную валюту не поддерживается'
+
+        remained = self.count_remainder()
+
         if remained == 0:
             return 'Денег нет, держись'
-        elif remained < self.limit and remained > 0:
-            remained_exchange = self.exchange_rates(currency, remained)
-            if remained_exchange:
-                return f'На сегодня осталось {remained_exchange[0]} {remained_exchange[1]}'
-            else:
-                return f'В валюту "{currency}" пока не конвертирую'
-        else:
-            remained_exchange = self.exchange_rates(currency, remained)
-            if remained_exchange:
-                return f'Денег нет, держись: твой долг - {abs(remained_exchange[0])} {remained_exchange[1]}'
-            else:
-                return f'Денег нет, держись. Но в валюту "{currency}" пока не конвертирую'
+
+        remained_exchange = self.exchange_rates(currency, remained)
+
+        if remained < self.limit and remained > 0:
+            return f'На сегодня осталось {remained_exchange[0]} {remained_exchange[1]}'
+
+        return (f'Денег нет, держись: твой долг '
+                    f'- {abs(remained_exchange[0])} {remained_exchange[1]}')
