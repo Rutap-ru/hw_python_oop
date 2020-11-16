@@ -63,9 +63,9 @@ class CashCalculator(Calculator):
     }
 
     def exchange_rates(self, currency, money):
-        exchange, valuta = self.currencies[currency]
+        exchange, rate = self.currencies[currency]
         money = round(money / exchange, 2)
-        return [money, valuta]
+        return [money, rate]
 
     def get_today_cash_remained(self, currency):
 
@@ -77,9 +77,10 @@ class CashCalculator(Calculator):
         if remained == 0:
             return 'Денег нет, держись'
 
-        balance, valuta = self.exchange_rates(currency, remained)
+        money, rate = self.exchange_rates(currency, remained)
 
         if remained > 0:
-            return (f'На сегодня осталось {balance} {valuta}')
+            return f'На сегодня осталось {money} {rate}'
 
-        return (f'Денег нет, держись: твой долг - {abs(balance)} {valuta}')
+        money = abs(money)
+        return f'Денег нет, держись: твой долг - {money} {rate}'
